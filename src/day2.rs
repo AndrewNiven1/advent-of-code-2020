@@ -1,5 +1,3 @@
-
-
 pub fn day2(input_lines: &[String]) -> (u64, u64) {
     let inputs: Vec<String> = input_lines.iter().map(|line| line.parse::<String>().expect("Failed to parse input")).collect();
 
