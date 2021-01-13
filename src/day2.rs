@@ -1,54 +1,65 @@
-struct PasswordAndPolicy<'a> {
-    // The first and second numbers in the policy.
-    num_one: usize,
-    num_two: usize,
 
-    required_char: char,
-    password: &'a str
-}
-
-impl<'a> PasswordAndPolicy<'a> {
-    fn new(input_line: &'a str) -> Self {
-        // Yeah, this could be regex, but speeeeeeeeeed
-        let dash_pos = input_line.find('-').expect("Invalid password policy: no dash");
-        let num_one = input_line[0..dash_pos].parse::<usize>().expect("Invalid password policy: minimum count not integer");
-        let input_line = &input_line[dash_pos + 1..];
-        let space_pos = input_line.find(' ').expect("Invalid password policy: no space");
-        let num_two = input_line[0..space_pos].parse::<usize>().expect("Invalid password policy: maximum count not integer");
-        let input_line = &input_line[space_pos + 1..];
-        let required_char = input_line.chars().next().expect("Invalid password policy: required character missing");
-        // Skip over the required character, the colon and the space
-        let password = &input_line[3..];
-    
-        PasswordAndPolicy {
-            num_one,
-            num_two,
-            required_char,
-            password
-        }        
-    }
-
-    fn valid_for_part_one(&self) -> bool {
-        // Interpret the two numbers as the minimum and maximum times the required_char may appear.
-        let char_count = self.password.matches(self.required_char).count();
-        (char_count >= self.num_one) && (char_count <= self.num_two)        
-    }
-
-    fn valid_for_part_two(&self) -> bool {
-        // Interpret the two numbers as the 1-based indices that the required_char may appear,
-        // and require that it appears in precisely one of those positions.
-        // Using nth twice on the same iterator avoids needlessly iterating over early characters twice,
-        // but requires some arithmetic to figure out the second index.
-        let mut chars = self.password.chars();
-        let first_char_matches = chars.nth(self.num_one - 1).unwrap_or_default() == self.required_char;
-        let second_char_matches = chars.nth(self.num_two - self.num_one - 1).unwrap_or_default() == self.required_char;
-        first_char_matches ^ second_char_matches
-    }
-}
 
 pub fn day2(input_lines: &[String]) -> (u64, u64) {
-    let passwords: Vec<PasswordAndPolicy> = input_lines.iter().map(|line| PasswordAndPolicy::new(line)).collect();
-    let part1 = passwords.iter().filter(|password| password.valid_for_part_one()).count() as u64;
-    let part2 = passwords.iter().filter(|password| password.valid_for_part_two()).count() as u64;
-    (part1, part2)
+    let inputs: Vec<String> = input_lines.iter().map(|line| line.parse::<String>().expect("Failed to parse input")).collect();
+
+    println!("{:?}", inputs);
+
+    let mut total_count_part1 = 0;
+    let mut total_count_part2 = 0;
+    
+    for input in &inputs {
+
+        let split1: Vec<&str> = input.split('-').collect();
+
+        let lower_bound = split1[0].parse::<usize>().expect("Didn't work");
+
+        let split2: Vec<&str> = split1[1].split(' ').collect();
+
+        let upper_bound = split2[0].parse::<usize>().expect("Didn't work");
+        let password = String::from(split2[2]);
+
+        let split3: Vec<&str> = split2[1].split(':').collect();
+
+        let character = split3[0].parse::<char>().expect("Didn't work");
+
+        let input_struct = build_input(lower_bound,upper_bound,character,password);
+
+        let mut count_part1 = 0;
+        
+        for letter in input_struct.password.chars(){
+            if letter == input_struct.character {
+                count_part1 = count_part1 + 1;
+            }
+        }
+
+        let char_vec: Vec<char> = input_struct.password.chars().collect();
+
+        if (char_vec[lower_bound-1] == input_struct.character) ^ (char_vec[upper_bound-1] == input_struct.character) {
+            total_count_part2 = total_count_part2 + 1;
+        }
+        
+        if count_part1 >= input_struct.lower_bound && count_part1 <= input_struct.upper_bound {
+            total_count_part1 = total_count_part1 + 1;
+        }
+
+    }
+
+    (total_count_part1,total_count_part2)
+}
+
+struct Input {
+    lower_bound: usize,
+    upper_bound: usize,
+    character: char,
+    password: String,
+}
+
+fn build_input(lower_bound: usize, upper_bound: usize, character: char, password: String) -> Input {
+    Input{
+        lower_bound,
+        upper_bound,
+        character,
+        password
+    }
 }
